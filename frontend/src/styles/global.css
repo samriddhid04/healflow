@@ -1,0 +1,60 @@
+/* global.css */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy:        #0A1628;
+  --navy-mid:    #162444;
+  --navy-soft:   #1E3460;
+  --blue:        #1D4ED8;
+  --blue-light:  #EFF6FF;
+  --blue-mid:    #BFDBFE;
+  --red:         #B91C1C;
+  --red-light:   #FEF2F2;
+  --amber:       #B45309;
+  --amber-light: #FFFBEB;
+  --green:       #15803D;
+  --green-light: #F0FDF4;
+  --slate:       #475569;
+  --slate-light: #F8FAFC;
+  --border:      #E2E8F0;
+  --border-dark: #CBD5E1;
+  --text-1:      #0F172A;
+  --text-2:      #334155;
+  --text-3:      #64748B;
+  --text-4:      #94A3B8;
+  --white:       #FFFFFF;
+  --surface:     #F8FAFC;
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:   0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: "Sora", sans-serif;
+  font-size: 14px;
+  color: var(--text-1);
+  background: var(--surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; }
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--blue) !important;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+}
+
+button:active { transform: scale(0.98); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 3px; }
+
+/* Utility */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
