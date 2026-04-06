@@ -100,11 +100,11 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: backend
-        run: npm ci --prefer-offline
+        run: npm install --prefer-offline
 
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm ci --prefer-offline
+        run: npm install --prefer-offline
 
       - name: Cache backend node_modules
         uses: actions/cache@v4
