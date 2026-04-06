@@ -3,8 +3,16 @@ import { useState, useEffect, useCallback, useRef } from "react";
 
 const BASE = "/api";
 
+/**
+ * useApi(path)
+ * Returns { data, total, loading, error, refetch }
+ * - data   → the `data` field from the API envelope  (or null)
+ * - total  → the `total` field if present            (or null)
+ * - loading, error as usual
+ */
 export function useApi(path) {
   const [data,    setData]    = useState(null);
+  const [total,   setTotal]   = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
   const pathRef = useRef(path);
@@ -16,15 +24,20 @@ export function useApi(path) {
       const res = await fetch(`${BASE}${fetchPath}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      setData(json);
+
+      // All our API routes return { success, data, total? }
+      // Unwrap here so every consumer gets clean data directly
+      setData(json.data  ?? json);
+      setTotal(json.total ?? null);
     } catch (e) {
       setError(e.message);
+      setData(null);
+      setTotal(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Re-fetch every time path changes (search string, filters, etc.)
   useEffect(() => {
     pathRef.current = path;
     fetchData(path);
@@ -34,7 +47,7 @@ export function useApi(path) {
     fetchData(pathRef.current);
   }, [fetchData]);
 
-  return { data, loading, error, refetch };
+  return { data, total, loading, error, refetch };
 }
 
 export async function apiPatch(path, body) {

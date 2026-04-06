@@ -5,11 +5,11 @@ import { Card, Badge, Spinner, ErrorState, SectionHeader } from "../components/u
 
 // ── SCHEDULE ──────────────────────────────────────────────────────────────────
 export function Schedule() {
-  // Always use today's real date — never hardcode
   const TODAY = new Date().toISOString().split("T")[0];
+  const { data, loading, error, refetch } = useApi(`/appointments?date=${TODAY}`);
 
-  const { data: raw, loading, error, refetch } = useApi(`/appointments?date=${TODAY}`);
-  const appointments = raw?.data ?? [];
+  // data is already the array (unwrapped by useApi)
+  const appointments = Array.isArray(data) ? data : [];
 
   async function updateStatus(id, status) {
     await apiPatch(`/appointments/${id}/status`, { status });
@@ -18,23 +18,25 @@ export function Schedule() {
 
   const statusOrder = { "in-progress": 0, upcoming: 1, completed: 2, cancelled: 3 };
   const sorted = [...appointments].sort((a, b) => {
-    const sA = statusOrder[a.status] ?? 9;
-    const sB = statusOrder[b.status] ?? 9;
-    if (sA !== sB) return sA - sB;
-    return a.time.localeCompare(b.time);
+    const diff = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9);
+    return diff !== 0 ? diff : a.time.localeCompare(b.time);
   });
 
   const counts = {
-    upcoming:   appointments.filter(a => a.status === "upcoming").length,
     inProgress: appointments.filter(a => a.status === "in-progress").length,
+    upcoming:   appointments.filter(a => a.status === "upcoming").length,
     completed:  appointments.filter(a => a.status === "completed").length,
   };
+
+  const todayLabel = new Date().toLocaleDateString("en-US", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <SectionHeader
         title="Today's Schedule"
-        subtitle={`${appointments.length} appointments · ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`}
+        subtitle={`${appointments.length} appointments · ${todayLabel}`}
       />
 
       {/* Summary chips */}
@@ -65,7 +67,7 @@ export function Schedule() {
           <div style={{ fontSize: 32, marginBottom: 12 }}>📅</div>
           <div style={{ fontWeight: 600, color: "var(--text-2)", marginBottom: 6 }}>No appointments today</div>
           <div style={{ fontSize: 13, color: "var(--text-4)" }}>
-            Today is {TODAY}. No appointments are scheduled for this date.
+            Date: {TODAY} — no appointments found for this date.
           </div>
         </Card>
       )}
@@ -75,7 +77,7 @@ export function Schedule() {
           {/* Table header */}
           <div style={{
             display: "grid",
-            gridTemplateColumns: "70px 1.4fr 1.4fr 1.2fr 90px 80px 140px",
+            gridTemplateColumns: "70px 1.4fr 1.4fr 1.3fr 90px 70px 160px",
             gap: 12, padding: "12px 20px",
             background: "var(--surface)",
             borderBottom: "1px solid var(--border)",
@@ -88,7 +90,7 @@ export function Schedule() {
             <span>Type</span>
             <span>Provider</span>
             <span>Room</span>
-            <span>Duration</span>
+            <span>Dur.</span>
             <span>Status</span>
           </div>
 
@@ -97,67 +99,40 @@ export function Schedule() {
               key={a.id}
               style={{
                 display: "grid",
-                gridTemplateColumns: "70px 1.4fr 1.4fr 1.2fr 90px 80px 140px",
+                gridTemplateColumns: "70px 1.4fr 1.4fr 1.3fr 90px 70px 160px",
                 gap: 12, padding: "14px 20px", alignItems: "center",
                 borderBottom: i < sorted.length - 1 ? "1px solid var(--border)" : "none",
-                background: a.status === "in-progress"
-                  ? "rgba(251,191,36,0.04)"
-                  : a.status === "completed"
-                    ? "rgba(21,128,61,0.03)"
-                    : "transparent",
+                background:
+                  a.status === "in-progress" ? "rgba(251,191,36,0.04)" :
+                  a.status === "completed"   ? "rgba(21,128,61,0.03)"  : "transparent",
               }}
             >
-              {/* Time */}
-              <div style={{
-                fontSize: 13, fontWeight: 700,
-                color: a.status === "completed" ? "var(--text-4)" : "var(--text-1)",
-                fontVariantNumeric: "tabular-nums",
-              }}>{a.time}</div>
-
-              {/* Patient */}
-              <div>
-                <div style={{
-                  fontSize: 13, fontWeight: 600,
-                  color: a.status === "completed" ? "var(--text-3)" : "var(--text-1)",
-                }}>{a.patientName}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: a.status === "completed" ? "var(--text-4)" : "var(--text-1)", fontVariantNumeric: "tabular-nums" }}>
+                {a.time}
               </div>
-
-              {/* Type */}
-              <div style={{ fontSize: 13, color: "var(--text-2)" }}>{a.type}</div>
-
-              {/* Provider */}
-              <div style={{
-                fontSize: 12, color: "var(--text-3)",
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              }}>{a.provider}</div>
-
-              {/* Room */}
+              <div style={{ fontSize: 13, fontWeight: 600, color: a.status === "completed" ? "var(--text-3)" : "var(--text-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {a.patientName}
+              </div>
+              <div style={{ fontSize: 13, color: "var(--text-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {a.type}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {a.provider}
+              </div>
               <div style={{ fontSize: 12, color: "var(--text-3)" }}>{a.room}</div>
-
-              {/* Duration */}
-              <div style={{ fontSize: 12, color: "var(--text-4)" }}>{a.duration} min</div>
-
-              {/* Status + action */}
+              <div style={{ fontSize: 12, color: "var(--text-4)" }}>{a.duration}m</div>
               <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                 <Badge type="appt" value={a.status} />
                 {a.status === "upcoming" && (
                   <button
                     onClick={() => updateStatus(a.id, "in-progress")}
-                    style={{
-                      fontSize: 11, padding: "4px 8px", borderRadius: 5,
-                      border: "none", background: "var(--blue)", color: "#fff",
-                      fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
-                    }}
+                    style={{ fontSize: 11, padding: "4px 8px", borderRadius: 5, border: "none", background: "var(--blue)", color: "#fff", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}
                   >Start</button>
                 )}
                 {a.status === "in-progress" && (
                   <button
                     onClick={() => updateStatus(a.id, "completed")}
-                    style={{
-                      fontSize: 11, padding: "4px 8px", borderRadius: 5,
-                      border: "none", background: "var(--green)", color: "#fff",
-                      fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
-                    }}
+                    style={{ fontSize: 11, padding: "4px 8px", borderRadius: 5, border: "none", background: "#15803D", color: "#fff", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}
                   >Done ✓</button>
                 )}
               </div>
@@ -171,8 +146,8 @@ export function Schedule() {
 
 // ── LABS ──────────────────────────────────────────────────────────────────────
 export function Labs() {
-  const { data: raw, loading, error } = useApi("/labs");
-  const labs = raw?.data ?? [];
+  const { data, loading, error } = useApi("/labs");
+  const labs = Array.isArray(data) ? data : [];
 
   const flagged  = labs.filter(l => l.flagged);
   const critical = labs.filter(l => l.status === "critical");
@@ -184,29 +159,20 @@ export function Labs() {
         subtitle={`${labs.length} results · ${flagged.length} flagged for review`}
       />
 
-      {/* Alert banners */}
       {!loading && critical.length > 0 && (
-        <div style={{
-          padding: "12px 16px", borderRadius: "var(--radius-md)",
-          background: "var(--red-light)", border: "1px solid #FECACA",
-          display: "flex", gap: 10, alignItems: "center",
-        }}>
+        <div style={{ padding: "12px 16px", borderRadius: "var(--radius-md)", background: "var(--red-light)", border: "1px solid #FECACA", display: "flex", gap: 10, alignItems: "center" }}>
           <span style={{ fontSize: 16 }}>🚨</span>
           <span style={{ fontSize: 13, color: "var(--red)", fontWeight: 600 }}>
-            {critical.length} critical result{critical.length !== 1 ? "s" : ""} require immediate physician review
+            {critical.length} critical result{critical.length !== 1 ? "s" : ""} — immediate physician review required
           </span>
         </div>
       )}
 
-      {!loading && flagged.length > 0 && (
-        <div style={{
-          padding: "12px 16px", borderRadius: "var(--radius-md)",
-          background: "var(--amber-light)", border: "1px solid #FDE68A",
-          display: "flex", gap: 10, alignItems: "center",
-        }}>
+      {!loading && flagged.length > 0 && critical.length === 0 && (
+        <div style={{ padding: "12px 16px", borderRadius: "var(--radius-md)", background: "var(--amber-light)", border: "1px solid #FDE68A", display: "flex", gap: 10, alignItems: "center" }}>
           <span style={{ fontSize: 16 }}>⚠️</span>
           <span style={{ fontSize: 13, color: "var(--amber)", fontWeight: 500 }}>
-            {flagged.length} result{flagged.length !== 1 ? "s" : ""} flagged for review
+            {flagged.length} result{flagged.length !== 1 ? "s" : ""} flagged for physician review
           </span>
         </div>
       )}
@@ -219,7 +185,7 @@ export function Labs() {
           {/* Header */}
           <div style={{
             display: "grid",
-            gridTemplateColumns: "1.4fr 1.4fr 110px 130px 1fr 90px 30px",
+            gridTemplateColumns: "1.3fr 1.4fr 110px 140px 1.1fr 90px 36px",
             gap: 12, padding: "12px 20px",
             background: "var(--surface)",
             borderBottom: "1px solid var(--border)",
@@ -233,7 +199,7 @@ export function Labs() {
             <span>Reference Range</span>
             <span>Ordered By</span>
             <span>Status</span>
-            <span>Flag</span>
+            <span></span>
           </div>
 
           {labs.map((l, i) => (
@@ -241,28 +207,24 @@ export function Labs() {
               key={l.id}
               style={{
                 display: "grid",
-                gridTemplateColumns: "1.4fr 1.4fr 110px 130px 1fr 90px 30px",
+                gridTemplateColumns: "1.3fr 1.4fr 110px 140px 1.1fr 90px 36px",
                 gap: 12, padding: "14px 20px", alignItems: "center",
                 borderBottom: i < labs.length - 1 ? "1px solid var(--border)" : "none",
-                background: l.status === "critical"
-                  ? "rgba(185,28,28,0.03)"
-                  : l.status === "abnormal"
-                    ? "rgba(180,83,9,0.02)"
-                    : "transparent",
+                background:
+                  l.status === "critical" ? "rgba(185,28,28,0.03)" :
+                  l.status === "abnormal" ? "rgba(180,83,9,0.02)"  : "transparent",
               }}
             >
-              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>{l.patientName}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.patientName}</div>
               <div style={{ fontSize: 13, color: "var(--text-2)" }}>{l.test}</div>
               <div style={{
                 fontSize: 13, fontWeight: 700,
-                color: l.status === "critical" ? "var(--red)"
-                  : l.status === "abnormal"   ? "var(--amber)"
-                  : "var(--text-1)",
+                color: l.status === "critical" ? "var(--red)" : l.status === "abnormal" ? "var(--amber)" : "var(--text-1)",
               }}>{l.value}</div>
               <div style={{ fontSize: 12, color: "var(--text-3)" }}>{l.reference}</div>
               <div style={{ fontSize: 12, color: "var(--text-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.orderedBy}</div>
               <Badge type="lab" value={l.status} />
-              <div style={{ fontSize: 14, textAlign: "center" }}>{l.flagged ? "🚩" : ""}</div>
+              <div style={{ textAlign: "center", fontSize: 14 }}>{l.flagged ? "🚩" : ""}</div>
             </div>
           ))}
         </Card>
@@ -274,22 +236,11 @@ export function Labs() {
 // ── MESSAGES ──────────────────────────────────────────────────────────────────
 export function Messages() {
   return (
-    <div style={{
-      display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center",
-      height: 400, gap: 16,
-    }}>
-      <div style={{
-        width: 60, height: 60, borderRadius: 16,
-        background: "var(--blue-light)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 26,
-      }}>💬</div>
-      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "var(--text-1)" }}>
-        Secure Messaging
-      </div>
-      <div style={{ fontSize: 14, color: "var(--text-4)", textAlign: "center", maxWidth: 340 }}>
-        HIPAA-compliant internal messaging between care team members.<br />Coming in the next release.
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 420, gap: 16 }}>
+      <div style={{ width: 64, height: 64, borderRadius: 16, background: "var(--blue-light)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>💬</div>
+      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "var(--text-1)" }}>Secure Messaging</div>
+      <div style={{ fontSize: 14, color: "var(--text-4)", textAlign: "center", maxWidth: 360, lineHeight: 1.6 }}>
+        HIPAA-compliant internal messaging between care team members.<br/>Coming in the next release.
       </div>
     </div>
   );
