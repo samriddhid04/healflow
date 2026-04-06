@@ -1,0 +1,20 @@
+// backend/.eslintrc.json
+{
+  "env": {
+    "node": true,
+    "es2021": true
+  },
+  "extends": ["eslint:recommended"],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "commonjs"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-console": ["warn", { "allow": ["log", "warn", "error"] }],
+    "no-debugger": "error",
+    "no-process-exit": "error",
+    "no-eval": "error",
+    "no-implied-eval": "error"
+  }
+}
