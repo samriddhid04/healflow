@@ -47,11 +47,11 @@ app.use((err, _req, res, _next) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n🏥  HealFlow API running on http://localhost:${PORT}`);
-  console.log(`    Health check → http://localhost:${PORT}/health`);
-  console.log(`    Patients     → http://localhost:${PORT}/api/patients`);
-  console.log(`    Dashboard    → http://localhost:${PORT}/api/dashboard/summary\n`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`\n🏥  HealFlow API running on ${PORT}`);
+  console.log(`    Health check → /health`);
+  console.log(`    Patients     → /api/patients`);
+  console.log(`    Dashboard    → /api/dashboard/summary\n`);
 });
 
 module.exports = app;
