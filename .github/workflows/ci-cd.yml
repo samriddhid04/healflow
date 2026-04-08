@@ -379,14 +379,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # Always fresh install for build — avoids cross-platform rollup issues
-      # (package-lock.json generated on Windows lacks linux optional deps)
-      - name: Install frontend dependencies (clean)
+      # Force clean install — deletes lockfile so npm resolves correct
+      # platform-specific rollup binary for Linux (not Windows)
+      - name: Install frontend dependencies
         working-directory: frontend
         run: |
-          rm -rf node_modules
+          rm -rf node_modules package-lock.json
           npm install
-          echo "✅ Dependencies installed fresh on Linux"
+          echo "✅ Dependencies installed"
 
       - name: Create CI .env.local
         working-directory: frontend
