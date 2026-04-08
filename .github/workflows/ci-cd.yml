@@ -471,13 +471,15 @@ jobs:
           echo "SERVER_PID=$!" >> $GITHUB_ENV
           echo "Waiting for server..."
           for i in $(seq 1 40); do
-            if curl -sf "http://localhost:${{ env.BACKEND_PORT }}/health" > /dev/null 2>&1; then
+            RESP=$(curl -s "http://localhost:${{ env.BACKEND_PORT }}/health" 2>&1)
+            echo "Attempt $i: $RESP"
+            if echo "$RESP" | grep -q "ok"; then
               echo "✅ Server ready after ${i}s"
               break
             fi
             sleep 1
             if [ "$i" -eq 40 ]; then
-              echo "::error::Server did not start in 20s"
+              echo "::error::Server did not start in 40s"
               exit 1
             fi
           done
