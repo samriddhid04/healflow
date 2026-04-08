@@ -827,7 +827,9 @@ jobs:
         working-directory: backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --service healflow-backend --detach
+        run: |
+          railway login --token $RAILWAY_TOKEN
+          railway up --service healflow --detach
 
       - name: Verify deployment health
         env:
