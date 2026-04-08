@@ -379,20 +379,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Restore frontend cache
-        uses: actions/cache/restore@v4
-        with:
-          path: frontend/node_modules
-          key: frontend-nm-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
-
-      - name: Fix binary permissions
+      # Always fresh install for build — avoids cross-platform rollup issues
+      # (package-lock.json generated on Windows lacks linux optional deps)
+      - name: Install frontend dependencies (clean)
         working-directory: frontend
         run: |
-          chmod +x node_modules/.bin/* 2>/dev/null || true
-          # Reinstall if vite binary broken
-          if ! node_modules/.bin/vite --version > /dev/null 2>&1; then
-            npm ci
-          fi
+          rm -rf node_modules
+          npm install
+          echo "✅ Dependencies installed fresh on Linux"
 
       - name: Create CI .env.local
         working-directory: frontend
