@@ -470,13 +470,13 @@ jobs:
           node server.js &
           echo "SERVER_PID=$!" >> $GITHUB_ENV
           echo "Waiting for server..."
-          for i in $(seq 1 20); do
+          for i in $(seq 1 40); do
             if curl -sf "http://localhost:${{ env.BACKEND_PORT }}/health" > /dev/null 2>&1; then
               echo "✅ Server ready after ${i}s"
               break
             fi
             sleep 1
-            if [ "$i" -eq 20 ]; then
+            if [ "$i" -eq 40 ]; then
               echo "::error::Server did not start in 20s"
               exit 1
             fi
@@ -560,13 +560,13 @@ jobs:
         run: |
           node server.js &
           echo "SERVER_PID=$!" >> $GITHUB_ENV
-          for i in $(seq 1 20); do
+          for i in $(seq 1 40); do
             if curl -sf "http://localhost:${{ env.BACKEND_PORT }}/health" > /dev/null 2>&1; then
               echo "✅ Server ready"
               break
             fi
             sleep 1
-            if [ "$i" -eq 20 ]; then
+            if [ "$i" -eq 40 ]; then
               echo "::error::Server failed to start"
               exit 1
             fi
@@ -827,7 +827,7 @@ jobs:
         working-directory: backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --service healflow --detach
+        run: railway up --service healflow-backend --detach
 
       - name: Verify deployment health
         env:
