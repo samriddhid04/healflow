@@ -1,3 +1,5 @@
+require("dotenv").config();  // load .env before anything else
+
 // server.js  –  HealFlow Express API
 const express = require("express");
 const cors    = require("cors");
@@ -10,7 +12,7 @@ const labsRouter         = require("./routes/labs");
 const dashboardRouter    = require("./routes/dashboard");
 
 const app  = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 8080;
 
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use(helmet());
