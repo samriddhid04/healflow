@@ -14,13 +14,19 @@ const PORT = process.env.PORT || 4000;
 
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use(helmet());
-app.use(cors({ origin: "http://localhost:5173", credentials: true })); // Vite dev port
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://your-vercel-app.vercel.app"
+  ],
+  credentials: true
+}));
 app.use(morgan("dev"));
 app.use(express.json());
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok", service: "HealFlow API", version: "1.0.0", timestamp: new Date().toISOString() });
+  res.send("Healflow API is healthy!");
 });
 
 // ── API Routes ────────────────────────────────────────────────────────────────
