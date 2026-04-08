@@ -26,7 +26,11 @@ app.use(express.json());
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get("/health", (_req, res) => {
-  res.send("Healflow API is healthy!");
+  res.json({
+    status: "ok",
+    service: "HealFlow API",
+    timestamp: new Date().toISOString()
+  });
 });
 
 // ── API Routes ────────────────────────────────────────────────────────────────
