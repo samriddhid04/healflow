@@ -115,34 +115,90 @@ jobs:
 # FIX: uses ./node_modules/.bin/eslint directly instead of npx
 # =============================================================================
   lint:
-  name: "🔍 Code Quality"
-  runs-on: ubuntu-latest
-  needs: [setup]
+    name: "🔍 Code Quality"
+    runs-on: ubuntu-latest
+    needs: [setup]
 
-  steps:
-    - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-    - uses: actions/setup-node@v4
-      with:
-        node-version: 18
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
-    # ✅ Fresh install (fixes permission issue)
-    - name: Install backend deps
-      working-directory: backend
-      run: npm install
+      # Restore caches
+      - name: Restore backend cache
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/node_modules
+          key: backend-nm-${{ runner.os }}-${{ hashFiles('backend/package-lock.json') }}
 
-    - name: Install frontend deps
-      working-directory: frontend
-      run: npm install
+      - name: Restore frontend cache
+        uses: actions/cache/restore@v4
+        with:
+          path: frontend/node_modules
+          key: frontend-nm-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
 
-    # ✅ Use scripts (clean)
-    - name: Lint backend
-      working-directory: backend
-      run: npm run lint
+      # FIX: restore executable permissions after cache restore
+      - name: Fix binary permissions — backend
+        working-directory: backend
+        run: |
+          if [ -d node_modules/.bin ]; then
+            chmod +x node_modules/.bin/* 2>/dev/null || true
+          fi
+          # Fallback: reinstall if eslint binary is broken
+          if ! node_modules/.bin/eslint --version > /dev/null 2>&1; then
+            echo "ESLint binary broken, reinstalling..."
+            npm ci
+          fi
 
-    - name: Lint frontend
-      working-directory: frontend
-      run: npm run lint
+      - name: Fix binary permissions — frontend
+        working-directory: frontend
+        run: |
+          if [ -d node_modules/.bin ]; then
+            chmod +x node_modules/.bin/* 2>/dev/null || true
+          fi
+          if ! node_modules/.bin/eslint --version > /dev/null 2>&1; then
+            echo "ESLint binary broken, reinstalling..."
+            npm ci
+          fi
+
+      - name: Lint backend
+        working-directory: backend
+        run: |
+          echo "Running ESLint on backend..."
+          ./node_modules/.bin/eslint . \
+            --ext .js \
+            --format stylish \
+            --max-warnings 20 \
+            --ignore-pattern node_modules \
+            --ignore-pattern data/ \
+            || {
+              echo "::error::Backend linting failed — fix ESLint errors above"
+              exit 1
+            }
+          echo "✅ Backend lint passed"
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: |
+          echo "Running ESLint on frontend..."
+          ./node_modules/.bin/eslint src \
+            --ext .js,.jsx \
+            --format stylish \
+            --max-warnings 20 \
+            || {
+              echo "::error::Frontend linting failed — fix ESLint errors above"
+              exit 1
+            }
+          echo "✅ Frontend lint passed"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### 🔍 Lint" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+
 # =============================================================================
 # JOB 4 — Security Audit
 # FIX: uses Node.js for JSON parsing (no python3 dependency)
