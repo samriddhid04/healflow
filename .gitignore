@@ -1,0 +1,51 @@
+# ============================================================
+# HealFlow .gitignore
+# ============================================================
+
+# ── Environment / Secrets (NEVER commit) ─────────────────────
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+.env.test
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# ── Node ──────────────────────────────────────────────────────
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+*.log
+
+# ── Build Outputs ─────────────────────────────────────────────
+dist/
+build/
+frontend/dist/
+.vite/
+
+# ── OS / Editor ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# ── CI / Temp ─────────────────────────────────────────────────
+/tmp/
+coverage/
+.nyc_output/
+
+# ── Security / Certs ──────────────────────────────────────────
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
