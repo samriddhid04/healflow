@@ -564,14 +564,12 @@ jobs:
         run: |
           node server.js &
           echo "SERVER_PID=$!" >> $GITHUB_ENV
-          echo "Waiting for server..."
           sleep 5
           READY=false
-          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25; do
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
             HTTP=$(curl -o /dev/null -s -w "%{http_code}" --max-time 3 http://localhost:8080/health || echo "000")
-            echo "Attempt $i — HTTP status: $HTTP"
+            echo "Attempt $i — HTTP: $HTTP"
             if [ "$HTTP" = "200" ]; then
-              echo "✅ Server ready after ${i} attempts"
               READY=true
               break
             fi
@@ -584,7 +582,7 @@ jobs:
 
       - name: Run API contract checks
         run: |
-          BASE="http://localhost:${{ env.BACKEND_PORT }}"
+          BASE="http://localhost:8080"
           TODAY=$(date +%Y-%m-%d)
           PASS=0; FAIL=0
 
