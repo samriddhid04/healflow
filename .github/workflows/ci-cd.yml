@@ -444,19 +444,19 @@ jobs:
         working-directory: backend
         run: |
           cat > .env << EOF
-          NODE_ENV=test
-          PORT=${{ env.BACKEND_PORT }}
-          ALLOWED_ORIGINS=http://localhost:5173
-          JWT_SECRET=ci-test-jwt-secret-this-is-32-chars-long!!
-          JWT_EXPIRES_IN=1h
-          RATE_LIMIT_WINDOW_MS=900000
-          RATE_LIMIT_MAX=1000
-          AUDIT_LOG_ENABLED=false
-          HIPAA_MODE=false
-          PHI_ENCRYPTION_KEY=ci-test-phi-key-exactly-32-bytes!!
-          DATA_RETENTION_DAYS=2555
-          EOF
-          echo "✅ CI .env created"
+NODE_ENV=test
+PORT=8080
+ALLOWED_ORIGINS=http://localhost:5173
+JWT_SECRET=ci-test-jwt-secret-this-is-32-chars-long!!
+JWT_EXPIRES_IN=1h
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX=1000
+AUDIT_LOG_ENABLED=false
+HIPAA_MODE=false
+PHI_ENCRYPTION_KEY=ci-test-phi-key-exactly-32-bytes!!
+DATA_RETENTION_DAYS=2555
+EOF
+echo "✅ CI .env created"
 
       - name: Start backend server
         working-directory: backend
