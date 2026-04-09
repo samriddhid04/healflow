@@ -120,7 +120,7 @@ router.post(
     res.status(201).json({ success: true, data: newPatient });
   }
 );
-
+aws_secret_access_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 // PATCH /api/patients/:id/status  –  update status
 router.patch(
   "/:id/status",
