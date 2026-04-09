@@ -802,15 +802,15 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Deploy to Vercel
-        working-directory: frontend
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
+          cd frontend
           vercel pull --yes --environment=production --token=$VERCEL_TOKEN
           vercel deploy --prod --token=$VERCEL_TOKEN
-
+          
       - name: Summary
         run: |
           echo "## 🚀 Frontend Deployed to Vercel" >> $GITHUB_STEP_SUMMARY
