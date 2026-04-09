@@ -36,7 +36,7 @@ concurrency:
 
 env:
   NODE_VERSION: "20.x"
-  BACKEND_PORT: 8080
+  BACKEND_PORT: 4000
   CI: "true"
 
 # =============================================================================
@@ -392,7 +392,7 @@ jobs:
         working-directory: frontend
         run: |
           cat > .env.local << 'EOF'
-          VITE_API_URL=http://localhost:8080
+          VITE_API_URL=http://localhost:4000
           VITE_APP_NAME=HealFlow
           VITE_APP_ENV=ci
           VITE_ENABLE_AUDIT_LOG=true
@@ -436,27 +436,32 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install backend dependencies
+      - name: Restore backend cache
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/node_modules
+          key: backend-nm-${{ runner.os }}-${{ hashFiles('backend/package-lock.json') }}
+
+      - name: Fix binary permissions
         working-directory: backend
-        run: npm ci
+        run: chmod +x node_modules/.bin/* 2>/dev/null || true
 
       - name: Create CI .env
         working-directory: backend
         run: |
-          cat > .env << EOF
-NODE_ENV=test
-PORT=8080
-ALLOWED_ORIGINS=http://localhost:5173
-JWT_SECRET=ci-test-jwt-secret-this-is-32-chars-long!!
-JWT_EXPIRES_IN=1h
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX=1000
-AUDIT_LOG_ENABLED=false
-HIPAA_MODE=false
-PHI_ENCRYPTION_KEY=ci-test-phi-key-exactly-32-bytes!!
-DATA_RETENTION_DAYS=2555
-EOF
-echo "✅ CI .env created"
+          printf 'NODE_ENV=test\n' > .env
+          printf 'PORT=8080\n' >> .env
+          printf 'ALLOWED_ORIGINS=http://localhost:5173\n' >> .env
+          printf 'JWT_SECRET=ci-test-jwt-secret-this-is-32-chars-long!!\n' >> .env
+          printf 'JWT_EXPIRES_IN=1h\n' >> .env
+          printf 'RATE_LIMIT_WINDOW_MS=900000\n' >> .env
+          printf 'RATE_LIMIT_MAX=1000\n' >> .env
+          printf 'AUDIT_LOG_ENABLED=false\n' >> .env
+          printf 'HIPAA_MODE=false\n' >> .env
+          printf 'PHI_ENCRYPTION_KEY=ci-test-phi-key-exactly-32-bytes!!\n' >> .env
+          printf 'DATA_RETENTION_DAYS=2555\n' >> .env
+          echo "✅ CI .env created"
+          cat .env
 
       - name: Start backend server
         working-directory: backend
@@ -464,16 +469,14 @@ echo "✅ CI .env created"
           node server.js &
           echo "SERVER_PID=$!" >> $GITHUB_ENV
           echo "Waiting for server..."
-          for i in $(seq 1 40); do
-            RESP=$(curl -s "http://localhost:${{ env.BACKEND_PORT }}/health" 2>&1)
-            echo "Attempt $i: $RESP"
-            if echo "$RESP" | grep -q "ok"; then
+          for i in $(seq 1 20); do
+            if curl -sf "http://localhost:${{ env.BACKEND_PORT }}/health" > /dev/null 2>&1; then
               echo "✅ Server ready after ${i}s"
               break
             fi
             sleep 1
-            if [ "$i" -eq 40 ]; then
-              echo "::error::Server did not start in 40s"
+            if [ "$i" -eq 20 ]; then
+              echo "::error::Server did not start in 20s"
               exit 1
             fi
           done
@@ -524,39 +527,45 @@ echo "✅ CI .env created"
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install backend dependencies
+      - name: Restore backend cache
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/node_modules
+          key: backend-nm-${{ runner.os }}-${{ hashFiles('backend/package-lock.json') }}
+
+      - name: Fix binary permissions
         working-directory: backend
-        run: npm ci
+        run: chmod +x node_modules/.bin/* 2>/dev/null || true
 
       - name: Create CI .env
         working-directory: backend
         run: |
-          cat > .env << EOF
-          NODE_ENV=test
-          PORT=${{ env.BACKEND_PORT }}
-          ALLOWED_ORIGINS=http://localhost:5173
-          JWT_SECRET=ci-test-jwt-secret-this-is-32-chars-long!!
-          JWT_EXPIRES_IN=1h
-          RATE_LIMIT_WINDOW_MS=900000
-          RATE_LIMIT_MAX=1000
-          AUDIT_LOG_ENABLED=false
-          HIPAA_MODE=false
-          PHI_ENCRYPTION_KEY=ci-test-phi-key-exactly-32-bytes!!
-          DATA_RETENTION_DAYS=2555
-          EOF
+          printf 'NODE_ENV=test\n' > .env
+          printf 'PORT=8080\n' >> .env
+          printf 'ALLOWED_ORIGINS=http://localhost:5173\n' >> .env
+          printf 'JWT_SECRET=ci-test-jwt-secret-this-is-32-chars-long!!\n' >> .env
+          printf 'JWT_EXPIRES_IN=1h\n' >> .env
+          printf 'RATE_LIMIT_WINDOW_MS=900000\n' >> .env
+          printf 'RATE_LIMIT_MAX=1000\n' >> .env
+          printf 'AUDIT_LOG_ENABLED=false\n' >> .env
+          printf 'HIPAA_MODE=false\n' >> .env
+          printf 'PHI_ENCRYPTION_KEY=ci-test-phi-key-exactly-32-bytes!!\n' >> .env
+          printf 'DATA_RETENTION_DAYS=2555\n' >> .env
+          echo "✅ CI .env created"
+          cat .env
 
       - name: Start backend
         working-directory: backend
         run: |
           node server.js &
           echo "SERVER_PID=$!" >> $GITHUB_ENV
-          for i in $(seq 1 40); do
+          for i in $(seq 1 20); do
             if curl -sf "http://localhost:${{ env.BACKEND_PORT }}/health" > /dev/null 2>&1; then
               echo "✅ Server ready"
               break
             fi
             sleep 1
-            if [ "$i" -eq 40 ]; then
+            if [ "$i" -eq 20 ]; then
               echo "::error::Server failed to start"
               exit 1
             fi
@@ -766,33 +775,33 @@ echo "✅ CI .env created"
 
     environment:
       name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      url: ${{ steps.deploy.outputs.preview-url }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
-      - name: Pull Vercel environment
-        working-directory: frontend
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build with Vercel
-        working-directory: frontend
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+          name: frontend-dist
+          path: frontend/dist/
 
       - name: Deploy to Vercel
-        working-directory: frontend
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        id: deploy
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./frontend
+          vercel-args: ${{ github.ref_name == 'main' && '--prod' || '' }}
 
       - name: Summary
         run: |
           echo "## 🚀 Frontend Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- URL: ${{ steps.deploy.outputs.preview-url }}" >> $GITHUB_STEP_SUMMARY
           echo "- Env: ${{ github.ref_name == 'main' && 'production' || 'staging' }}" >> $GITHUB_STEP_SUMMARY
+
 # =============================================================================
 # JOB 12 — Deploy Backend → Railway
 # =============================================================================
