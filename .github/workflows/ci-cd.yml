@@ -488,7 +488,7 @@ jobs:
 
       - name: Validate /health endpoint
         run: |
-          RESP=$(curl -sf "http://localhost:${{ env.BACKEND_PORT }}/health")
+          RESP=$(curl -sf "http://localhost:8080/health")
           echo "Response: $RESP"
           STATUS=$(node -e "
             try {
@@ -504,12 +504,12 @@ jobs:
 
       - name: Check security headers
         run: |
-          HEADERS=$(curl -sI "http://localhost:${{ env.BACKEND_PORT }}/health")
+          HEADERS=$(curl -sI "http://localhost:8080/health")
           for H in "x-content-type-options" "x-frame-options"; do
             if echo "$HEADERS" | grep -qi "$H"; then
               echo "✅ Security header present: $H"
             else
-              echo "::warning::Security header missing: $H (check helmet config)"
+              echo "::warning::Security header missing: $H"
             fi
           done
 
