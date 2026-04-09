@@ -19,7 +19,8 @@ app.use(helmet());
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://your-vercel-app.vercel.app"
+    "https://healflow.vercel.app",
+    "https://healflow-bmfsh2dax-wav-pipeline.vercel.app"
   ],
   credentials: true
 }));

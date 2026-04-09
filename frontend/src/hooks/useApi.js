@@ -1,7 +1,7 @@
 // hooks/useApi.js
 import { useState, useEffect, useCallback, useRef } from "react";
 
-const BASE =  import.meta.env.VITE_API_URL + "/api";
+const BASE =  (import.meta.env.VITE_API_URL || "") + "/api";
 
 /**
  * useApi(path)
